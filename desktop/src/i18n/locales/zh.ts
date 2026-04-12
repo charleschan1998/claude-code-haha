@@ -369,6 +369,12 @@ export const zh: Record<TranslationKey, string> = {
   'newTask.delayNote': '定时任务会使用随机延迟以优化服务器性能。',
   'newTask.create': '创建任务',
   'newTask.promptPlaceholder': '查看过去 24 小时的提交。总结变更内容，标记有风险的模式或缺失的测试，并记录值得跟进的事项。',
+  'newTask.notification': '通知',
+  'newTask.notifyOnComplete': '完成后推送通知',
+  'newTask.notifyChannels': '通知渠道',
+  'newTask.notifyHint': '任务完成后将标题和结果推送到 IM 渠道。',
+  'newTask.notConfigured': '未配置',
+  'newTask.noChannelConfigured': '尚未配置任何 IM 渠道，请前往 设置 → IM 接入 进行配置。',
 
   // ─── Cron 描述 ──────────────────────────────────────
   'cron.everyMinute': '每分钟执行',

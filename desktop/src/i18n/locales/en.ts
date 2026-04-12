@@ -367,6 +367,12 @@ export const en = {
   'newTask.delayNote': 'Scheduled tasks use a randomized delay of several minutes for server performance.',
   'newTask.create': 'Create task',
   'newTask.promptPlaceholder': 'Look at the commits from the last 24 hours. Summarize what changed, call out any risky patterns or missing tests, and note anything worth following up on.',
+  'newTask.notification': 'Notification',
+  'newTask.notifyOnComplete': 'Push notification on completion',
+  'newTask.notifyChannels': 'Notification channels',
+  'newTask.notifyHint': 'Send the task title and result to your IM channels when done.',
+  'newTask.notConfigured': 'Not configured',
+  'newTask.noChannelConfigured': 'No IM channels configured yet. Go to Settings → IM Adapters to set up.',
 
   // ─── Cron Descriptions ──────────────────────────────────────
   'cron.everyMinute': 'Runs every minute',

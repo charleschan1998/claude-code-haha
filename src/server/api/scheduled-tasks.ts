@@ -10,7 +10,7 @@
  * DELETE /api/scheduled-tasks/:id       — 删除任务
  */
 
-import { CronService } from '../services/cronService.js'
+import { CronService, type CronTask } from '../services/cronService.js'
 import { cronScheduler } from '../services/cronScheduler.js'
 import { ApiError, errorResponse } from '../middleware/errorHandler.js'
 
@@ -61,6 +61,7 @@ export async function handleScheduledTasksApi(
         model: body.model as string | undefined,
         folderPath: body.folderPath as string | undefined,
         useWorktree: body.useWorktree as boolean | undefined,
+        notification: body.notification as CronTask['notification'],
       })
       return Response.json({ task }, { status: 201 })
     }

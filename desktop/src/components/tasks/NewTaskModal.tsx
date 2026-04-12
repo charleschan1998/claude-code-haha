@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTaskStore } from '../../stores/taskStore'
 import { useSessionStore } from '../../stores/sessionStore'
+import { useAdapterStore } from '../../stores/adapterStore'
 import { Modal } from '../shared/Modal'
 import { Input } from '../shared/Input'
 import { Button } from '../shared/Button'
@@ -59,6 +60,17 @@ export function NewTaskModal({ open, onClose, editTask }: Props) {
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const activeSession = sessions.find((s) => s.id === activeSessionId)
   const defaultWorkDir = activeSession?.workDir || ''
+  const adapterConfig = useAdapterStore((s) => s.config)
+  const fetchAdapterConfig = useAdapterStore((s) => s.fetchConfig)
+
+  useEffect(() => {
+    if (open) fetchAdapterConfig()
+  }, [open])
+
+  const isFeishuConfigured = !!(adapterConfig.feishu?.appId && adapterConfig.feishu?.appSecret
+    && ((adapterConfig.feishu?.pairedUsers?.length ?? 0) > 0 || (adapterConfig.feishu?.allowedUsers?.length ?? 0) > 0))
+  const isTelegramConfigured = !!(adapterConfig.telegram?.botToken
+    && ((adapterConfig.telegram?.pairedUsers?.length ?? 0) > 0 || (adapterConfig.telegram?.allowedUsers?.length ?? 0) > 0))
 
   const isEdit = !!editTask
   const parsed = editTask ? parseCron(editTask.cron) : null
@@ -82,6 +94,8 @@ export function NewTaskModal({ open, onClose, editTask }: Props) {
   const [permissionMode, setPermissionMode] = useState<PermissionMode>((editTask?.permissionMode as PermissionMode) || 'default')
   const [folderPath, setFolderPath] = useState(editTask?.folderPath || defaultWorkDir)
   const [useWorktree, setUseWorktree] = useState(editTask?.useWorktree || false)
+  const [notifyEnabled, setNotifyEnabled] = useState(editTask?.notification?.enabled || false)
+  const [notifyChannels, setNotifyChannels] = useState<('telegram' | 'feishu')[]>(editTask?.notification?.channels || [])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Enhanced scheduling state
@@ -118,6 +132,9 @@ export function NewTaskModal({ open, onClose, editTask }: Props) {
         permissionMode: permissionMode !== 'default' ? permissionMode : undefined,
         folderPath: folderPath.trim() || undefined,
         useWorktree: useWorktree || undefined,
+        notification: notifyEnabled && notifyChannels.length > 0
+          ? { enabled: true, channels: notifyChannels }
+          : undefined,
       }
       if (isEdit) {
         await updateTask(editTask!.id, payload)
@@ -307,6 +324,68 @@ export function NewTaskModal({ open, onClose, editTask }: Props) {
             />
           </div>
         )}
+
+        {/* Notification */}
+        <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-border)] p-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={notifyEnabled}
+              onChange={(e) => setNotifyEnabled(e.target.checked)}
+              className="w-4 h-4 rounded border-[var(--color-border)] accent-[var(--color-brand)]"
+            />
+            <div>
+              <span className="text-sm font-medium text-[var(--color-text-primary)]">{t('newTask.notifyOnComplete')}</span>
+              <p className="text-xs text-[var(--color-text-tertiary)]">{t('newTask.notifyHint')}</p>
+            </div>
+          </label>
+          {notifyEnabled && (
+            <div className="flex flex-col gap-2 pl-7">
+              <div className="flex items-center gap-4">
+                <label className={`flex items-center gap-2 ${isFeishuConfigured ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
+                  <input
+                    type="checkbox"
+                    checked={notifyChannels.includes('feishu')}
+                    disabled={!isFeishuConfigured}
+                    onChange={(e) => {
+                      setNotifyChannels((prev) =>
+                        e.target.checked ? [...prev, 'feishu'] : prev.filter((c) => c !== 'feishu'),
+                      )
+                    }}
+                    className="w-3.5 h-3.5 rounded border-[var(--color-border)] accent-[var(--color-brand)]"
+                  />
+                  <span className="text-sm text-[var(--color-text-primary)]">{t('settings.adapters.feishu')}</span>
+                  {!isFeishuConfigured && (
+                    <span className="text-[10px] text-[var(--color-warning)]">{t('newTask.notConfigured')}</span>
+                  )}
+                </label>
+                <label className={`flex items-center gap-2 ${isTelegramConfigured ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
+                  <input
+                    type="checkbox"
+                    checked={notifyChannels.includes('telegram')}
+                    disabled={!isTelegramConfigured}
+                    onChange={(e) => {
+                      setNotifyChannels((prev) =>
+                        e.target.checked ? [...prev, 'telegram'] : prev.filter((c) => c !== 'telegram'),
+                      )
+                    }}
+                    className="w-3.5 h-3.5 rounded border-[var(--color-border)] accent-[var(--color-brand)]"
+                  />
+                  <span className="text-sm text-[var(--color-text-primary)]">{t('settings.adapters.telegram')}</span>
+                  {!isTelegramConfigured && (
+                    <span className="text-[10px] text-[var(--color-warning)]">{t('newTask.notConfigured')}</span>
+                  )}
+                </label>
+              </div>
+              {!isFeishuConfigured && !isTelegramConfigured && (
+                <p className="text-xs text-[var(--color-warning)]">
+                  <span className="material-symbols-outlined text-[12px] align-middle mr-1">warning</span>
+                  {t('newTask.noChannelConfigured')}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Cron preview */}
         <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--color-surface-container)] text-xs text-[var(--color-text-secondary)]">

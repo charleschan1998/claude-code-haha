@@ -52,7 +52,7 @@ export function PromptEditor({
       <div className="border-t border-[var(--color-border)]/40 px-3 py-2 flex flex-col gap-2 bg-[var(--color-surface-container-low)] rounded-b-[var(--radius-lg)]">
         {/* Row 1: Permission + Model selectors */}
         <div className="flex items-center justify-between">
-          <PermissionModeSelector value={permissionMode} onChange={onPermissionModeChange} />
+          <PermissionModeSelector value={permissionMode} onChange={onPermissionModeChange} workDir={folderPath || undefined} />
           <ModelSelector value={modelId} onChange={onModelChange} />
         </div>
 

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTaskStore } from '../../stores/taskStore'
-import { useSessionStore } from '../../stores/sessionStore'
 import { useChatStore } from '../../stores/chatStore'
-import { useUIStore } from '../../stores/uiStore'
+import { useTabStore } from '../../stores/tabStore'
 import { useTranslation } from '../../i18n'
 import { parseRunOutput } from '../../lib/parseRunOutput'
 import type { TaskRun } from '../../types/task'
@@ -53,16 +52,14 @@ const STATUS_CONFIG: Record<string, { icon: string; color: string }> = {
 export function TaskRunsPanel({ taskId, onClose, refreshKey }: Props) {
   const t = useTranslation()
   const { fetchTaskRuns } = useTaskStore()
-  const setActiveSession = useSessionStore((s) => s.setActiveSession)
   const connectToSession = useChatStore((s) => s.connectToSession)
-  const setActiveView = useUIStore((s) => s.setActiveView)
+  const openTab = useTabStore((s) => s.openTab)
   const [runs, setRuns] = useState<TaskRun[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const openSession = (sessionId: string) => {
-    setActiveView('code')
-    setActiveSession(sessionId)
+  const openSession = (sessionId: string, taskName?: string) => {
+    openTab(sessionId, taskName || 'Task Run')
     connectToSession(sessionId)
   }
 
@@ -163,7 +160,7 @@ export function TaskRunsPanel({ taskId, onClose, refreshKey }: Props) {
                       {/* Open session — only after run completes (session is empty while running) */}
                       {run.sessionId && run.status !== 'running' && (
                         <button
-                          onClick={() => openSession(run.sessionId!)}
+                          onClick={() => openSession(run.sessionId!, run.taskName)}
                           className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[var(--color-brand)] bg-[var(--color-brand)]/8 hover:bg-[var(--color-brand)]/15 rounded-[var(--radius-sm)] transition-colors"
                         >
                           <span className="material-symbols-outlined text-[14px]">open_in_new</span>

@@ -1,5 +1,10 @@
 // Source: src/server/services/cronService.ts
 
+export type TaskNotificationConfig = {
+  enabled: boolean
+  channels: ('telegram' | 'feishu')[]
+}
+
 export type CronTask = {
   id: string
   name: string
@@ -17,6 +22,7 @@ export type CronTask = {
   model?: string
   folderPath?: string
   useWorktree?: boolean
+  notification?: TaskNotificationConfig
 }
 
 export type CreateTaskInput = {
@@ -31,6 +37,7 @@ export type CreateTaskInput = {
   model?: string
   folderPath?: string
   useWorktree?: boolean
+  notification?: TaskNotificationConfig
 }
 
 export type TaskRun = {
