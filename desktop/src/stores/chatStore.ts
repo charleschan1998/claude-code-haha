@@ -511,9 +511,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       case 'status':
         update((session) => {
           const pendingText = `${session.streamingText}${consumePendingDelta()}`
-          const shouldFlush = pendingText.trim() && session.chatState === 'streaming' && msg.state !== 'streaming'
+          const hasPendingStreamText =
+            session.chatState === 'streaming' && pendingText.trim().length > 0
+          // Background task progress can arrive while the assistant is still
+          // streaming one markdown reply. Keep that turn intact so we do not
+          // split formatting markers (for example backticks/strong markers)
+          // across separate bubbles.
+          const preserveStreamingTurn = hasPendingStreamText && msg.state !== 'idle'
+          const shouldFlush = hasPendingStreamText && msg.state === 'idle'
           return {
-            chatState: msg.state,
+            chatState: preserveStreamingTurn ? 'streaming' : msg.state,
             ...(msg.verb && msg.verb !== 'Thinking' ? { statusVerb: msg.verb } : {}),
             ...(msg.tokens ? { tokenUsage: { ...session.tokenUsage, output_tokens: msg.tokens } } : {}),
             ...(msg.state === 'idle' ? { activeThinkingId: null, statusVerb: '' } : {}),

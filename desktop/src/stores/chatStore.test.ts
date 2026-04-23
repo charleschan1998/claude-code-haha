@@ -618,6 +618,71 @@ describe('chatStore history mapping', () => {
     vi.useRealTimers()
   })
 
+  it('does not split one streamed markdown reply when task progress arrives mid-stream', () => {
+    vi.useFakeTimers()
+
+    useChatStore.setState({
+      sessions: {
+        [TEST_SESSION_ID]: {
+          messages: [],
+          chatState: 'idle',
+          connectionState: 'connected',
+          streamingText: '',
+          streamingToolInput: '',
+          activeToolUseId: null,
+          activeToolName: null,
+          activeThinkingId: null,
+          pendingPermission: null,
+          pendingComputerUsePermission: null,
+          tokenUsage: { input_tokens: 0, output_tokens: 0 },
+          elapsedSeconds: 0,
+          statusVerb: '',
+          slashCommands: [],
+          agentTaskNotifications: {},
+          elapsedTimer: null,
+        },
+      },
+    })
+
+    useChatStore.getState().handleServerMessage(TEST_SESSION_ID, {
+      type: 'content_start',
+      blockType: 'text',
+    })
+    useChatStore.getState().handleServerMessage(TEST_SESSION_ID, {
+      type: 'content_delta',
+      text: '1. **`core/audio/waveform.py:19-31`** — 同步阻塞 I/O。',
+    })
+    vi.advanceTimersByTime(60)
+
+    useChatStore.getState().handleServerMessage(TEST_SESSION_ID, {
+      type: 'status',
+      state: 'tool_executing',
+      verb: 'Task in progress',
+    })
+
+    useChatStore.getState().handleServerMessage(TEST_SESSION_ID, {
+      type: 'content_delta',
+      text: ' 建议直接用 `subprocess.PIPE` 流式处理。',
+    })
+    vi.advanceTimersByTime(60)
+
+    useChatStore.getState().handleServerMessage(TEST_SESSION_ID, {
+      type: 'message_complete',
+      usage: { input_tokens: 1, output_tokens: 2 },
+    })
+
+    expect(useChatStore.getState().sessions[TEST_SESSION_ID]?.messages).toMatchObject([
+      {
+        type: 'assistant_text',
+        content:
+          '1. **`core/audio/waveform.py:19-31`** — 同步阻塞 I/O。 建议直接用 `subprocess.PIPE` 流式处理。',
+      },
+    ])
+
+    vi.runOnlyPendingTimers()
+    vi.useRealTimers()
+  })
+
   it('sends Computer Use approval payloads back over websocket', () => {
     useChatStore.setState({
       sessions: {
